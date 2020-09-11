@@ -30,7 +30,8 @@ def action_checkbox(obj):
 
 
 action_checkbox.short_description = mark_safe(
-    '<input type="checkbox" id="action-toggle" />')
+    '<input type="checkbox" id="action-toggle" />'
+)
 action_checkbox.allow_tags = True
 action_checkbox.allow_export = False
 action_checkbox.is_column = False
@@ -59,8 +60,14 @@ class BaseActionView(ModelAdminView):
         super().__init__(request, *args, **kwargs)
         if django_version > (2, 0):
             for model in self.admin_site._registry:
-                if not hasattr(self.admin_site._registry[model], 'has_delete_permission'):
-                    setattr(self.admin_site._registry[model], 'has_delete_permission', self.has_delete_permission)
+                if not hasattr(
+                    self.admin_site._registry[model], 'has_delete_permission'
+                ):
+                    setattr(
+                        self.admin_site._registry[model],
+                        'has_delete_permission',
+                        self.has_delete_permission,
+                    )
 
 
 class DeleteSelectedAction(BaseActionView):
@@ -81,15 +88,21 @@ class DeleteSelectedAction(BaseActionView):
         n = queryset.count()
         if n:
             if self.delete_models_batch:
-                self.log('delete', _('Batch delete %(count)d %(items)s.') % {"count": n, "items": model_ngettext(self.opts, n)})
+                self.log(
+                    'delete',
+                    _('Batch delete %(count)d %(items)s.')
+                    % {"count": n, "items": model_ngettext(self.opts, n)},
+                )
                 queryset.delete()
             else:
                 for obj in queryset:
                     self.log('delete', '', obj)
                     obj.delete()
-            self.message_user(_("Successfully deleted %(count)d %(items)s.") % {
-                "count": n, "items": model_ngettext(self.opts, n)
-            }, 'success')
+            self.message_user(
+                _("Successfully deleted %(count)d %(items)s.")
+                % {"count": n, "items": model_ngettext(self.opts, n)},
+                'success',
+            )
 
     @filter_hook
     def do_action(self, queryset):
@@ -101,13 +114,22 @@ class DeleteSelectedAction(BaseActionView):
         # will also be deleted.
 
         if django_version > (2, 1):
-            deletable_objects, model_count, perms_needed, protected = get_deleted_objects(
-                queryset, self.opts, self.admin_site)
+            (
+                deletable_objects,
+                model_count,
+                perms_needed,
+                protected,
+            ) = get_deleted_objects(queryset, self.opts, self.admin_site)
         else:
             using = router.db_for_write(self.model)
-            deletable_objects, model_count, perms_needed, protected = get_deleted_objects(
-                queryset, self.opts, self.user, self.admin_site, using)
-
+            (
+                deletable_objects,
+                model_count,
+                perms_needed,
+                protected,
+            ) = get_deleted_objects(
+                queryset, self.opts, self.user, self.admin_site, using
+            )
 
         # The user has already confirmed the deletion.
         # Do the deletion and return a None to display the change list view again.
@@ -129,21 +151,27 @@ class DeleteSelectedAction(BaseActionView):
             title = _("Are you sure?")
 
         context = self.get_context()
-        context.update({
-            "title": title,
-            "objects_name": objects_name,
-            "deletable_objects": [deletable_objects],
-            'queryset': queryset,
-            "perms_lacking": perms_needed,
-            "protected": protected,
-            "opts": self.opts,
-            "app_label": self.app_label,
-            'action_checkbox_name': ACTION_CHECKBOX_NAME,
-        })
+        context.update(
+            {
+                "title": title,
+                "objects_name": objects_name,
+                "deletable_objects": [deletable_objects],
+                'queryset': queryset,
+                "perms_lacking": perms_needed,
+                "protected": protected,
+                "opts": self.opts,
+                "app_label": self.app_label,
+                'action_checkbox_name': ACTION_CHECKBOX_NAME,
+            }
+        )
 
         # Display the confirmation page
-        return TemplateResponse(self.request, self.delete_selected_confirmation_template or
-                                self.get_template_list('views/model_delete_selected_confirm.html'), context)
+        return TemplateResponse(
+            self.request,
+            self.delete_selected_confirmation_template
+            or self.get_template_list('views/model_delete_selected_confirm.html'),
+            context,
+        )
 
 
 class ActionPlugin(BaseAdminPlugin):
@@ -165,19 +193,27 @@ class ActionPlugin(BaseAdminPlugin):
 
     def get_list_display_links(self, list_display_links):
         if self.actions:
-            if len(list_display_links) == 1 and list_display_links[0] == 'action_checkbox':
+            if (
+                len(list_display_links) == 1
+                and list_display_links[0] == 'action_checkbox'
+            ):
                 return list(self.admin_view.list_display[1:2])
         return list_display_links
 
     def get_context(self, context):
         if self.actions and self.admin_view.result_count:
             av = self.admin_view
-            selection_note_all = ungettext('%(total_count)s selected',
-                                           'All %(total_count)s selected', av.result_count)
+            selection_note_all = ungettext(
+                '%(total_count)s selected',
+                'All %(total_count)s selected',
+                av.result_count,
+            )
 
             new_context = {
-                'selection_note': _('0 of %(cnt)s selected') % {'cnt': len(av.result_list)},
-                'selection_note_all': selection_note_all % {'total_count': av.result_count},
+                'selection_note': _('0 of %(cnt)s selected')
+                % {'cnt': len(av.result_list)},
+                'selection_note_all': selection_note_all
+                % {'total_count': av.result_count},
                 'action_choices': self.get_action_choices(),
                 'actions_selection_counter': self.actions_selection_counter,
             }
@@ -193,8 +229,10 @@ class ActionPlugin(BaseAdminPlugin):
             action = request.POST['action']
 
             if action not in self.actions:
-                msg = _("Items must be selected in order to perform "
-                        "actions on them. No items have been changed.")
+                msg = _(
+                    "Items must be selected in order to perform "
+                    "actions on them. No items have been changed."
+                )
                 av.message_user(msg)
             else:
                 ac, name, description, icon = self.actions[action]
@@ -203,8 +241,10 @@ class ActionPlugin(BaseAdminPlugin):
 
                 if not selected and not select_across:
                     # Reminder that something needs to be selected or nothing will happen
-                    msg = _("Items must be selected in order to perform "
-                            "actions on them. No items have been changed.")
+                    msg = _(
+                        "Items must be selected in order to perform "
+                        "actions on them. No items have been changed."
+                    )
                     av.message_user(msg)
                 else:
                     queryset = av.list_queryset._clone()
@@ -239,8 +279,7 @@ class ActionPlugin(BaseAdminPlugin):
             class_actions = getattr(klass, 'actions', [])
             if not class_actions:
                 continue
-            actions.extend(
-                [self.get_action(action) for action in class_actions])
+            actions.extend([self.get_action(action) for action in class_actions])
 
         # get_action might have returned None, so filter any of those out.
         actions = filter(None, actions)
@@ -248,10 +287,9 @@ class ActionPlugin(BaseAdminPlugin):
             actions = list(actions)
 
         # Convert the actions into a OrderedDict keyed by name.
-        actions = OrderedDict([
-            (name, (ac, name, desc, icon))
-            for ac, name, desc, icon in actions
-        ])
+        actions = OrderedDict(
+            [(name, (ac, name, desc, icon)) for ac, name, desc, icon in actions]
+        )
 
         return actions
 
@@ -270,7 +308,12 @@ class ActionPlugin(BaseAdminPlugin):
         if isinstance(action, type) and issubclass(action, BaseActionView):
             if not action.has_perm(self.admin_view):
                 return None
-            return action, getattr(action, 'action_name'), getattr(action, 'description'), getattr(action, 'icon')
+            return (
+                action,
+                getattr(action, 'action_name'),
+                getattr(action, 'description'),
+                getattr(action, 'icon'),
+            )
 
         elif callable(action):
             func = action
@@ -303,14 +346,20 @@ class ActionPlugin(BaseAdminPlugin):
     # Media
     def get_media(self, media):
         if self.actions and self.admin_view.result_count:
-            media = media + self.vendor('xadmin.plugin.actions.js', 'xadmin.plugins.css')
+            media = media + self.vendor(
+                'xadmin.plugin.actions.js', 'xadmin.plugins.css'
+            )
         return media
 
     # Block Views
     def block_results_bottom(self, context, nodes):
         if self.actions and self.admin_view.result_count:
-            nodes.append(loader.render_to_string('xadmin/blocks/model_list.results_bottom.actions.html',
-                                                 context=get_context_dict(context)))
+            nodes.append(
+                loader.render_to_string(
+                    'xadmin/blocks/model_list.results_bottom.actions.html',
+                    context=get_context_dict(context),
+                )
+            )
 
 
 site.register_plugin(ActionPlugin, ListAdminView)

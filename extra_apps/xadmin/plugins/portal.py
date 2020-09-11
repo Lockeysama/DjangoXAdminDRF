@@ -1,4 +1,4 @@
-#coding:utf-8
+# coding:utf-8
 from xadmin.sites import site
 from xadmin.models import UserSettings
 from xadmin.views import BaseAdminPlugin, ModelFormAdminView, DetailAdminView
@@ -21,7 +21,6 @@ def get_layout_objects(layout, clz, objects):
 
 
 class ModelFormPlugin(BasePortalPlugin):
-
     def _portal_key(self):
         return '%s_%s_editform_portal' % (self.opts.app_label, self.opts.model_name)
 
@@ -44,11 +43,15 @@ class ModelFormPlugin(BasePortalPlugin):
 
         try:
             layout_pos = UserSettings.objects.get(
-                user=self.user, key=self._portal_key()).value
+                user=self.user, key=self._portal_key()
+            ).value
             layout_cs = layout_pos.split('|')
             for i, c in enumerate(cs):
-                c.fields = [fs_map.pop(j) for j in layout_cs[i].split(
-                    ',') if j in fs_map] if len(layout_cs) > i else []
+                c.fields = (
+                    [fs_map.pop(j) for j in layout_cs[i].split(',') if j in fs_map]
+                    if len(layout_cs) > i
+                    else []
+                )
             if fs_map and cs:
                 cs[0].fields.extend(fs_map.values())
         except Exception:
@@ -58,17 +61,21 @@ class ModelFormPlugin(BasePortalPlugin):
 
     def block_form_top(self, context, node):
         # put portal key and submit url to page
-        return "<input type='hidden' id='_portal_key' value='%s' />" % self._portal_key()
+        return (
+            "<input type='hidden' id='_portal_key' value='%s' />" % self._portal_key()
+        )
 
 
 class ModelDetailPlugin(ModelFormPlugin):
-
     def _portal_key(self):
         return '%s_%s_detail_portal' % (self.opts.app_label, self.opts.model_name)
 
     def block_after_fieldsets(self, context, node):
         # put portal key and submit url to page
-        return "<input type='hidden' id='_portal_key' value='%s' />" % self._portal_key()
+        return (
+            "<input type='hidden' id='_portal_key' value='%s' />" % self._portal_key()
+        )
+
 
 site.register_plugin(ModelFormPlugin, ModelFormAdminView)
 site.register_plugin(ModelDetailPlugin, DetailAdminView)

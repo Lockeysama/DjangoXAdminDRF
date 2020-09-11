@@ -62,7 +62,9 @@ def do_blockcapture(parser, token):
     try:
         tag_name, args = token.contents.split(None, 1)
     except ValueError:
-        raise template.TemplateSyntaxError("'blockcapture' node requires a variable name.")
+        raise template.TemplateSyntaxError(
+            "'blockcapture' node requires a variable name."
+        )
 
     nodelist = parser.parse(('endblockcapture',))
     parser.delete_first_token()

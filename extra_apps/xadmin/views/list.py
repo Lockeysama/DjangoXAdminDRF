@@ -48,7 +48,6 @@ class ResultRow(dict):
 
 
 class ResultItem(object):
-
     def __init__(self, field_name, row):
         self.classes = []
         self.text = '&nbsp;'
@@ -67,8 +66,9 @@ class ResultItem(object):
 
     @property
     def label(self):
-        text = mark_safe(
-            self.text) if self.allow_tags else conditional_escape(self.text)
+        text = (
+            mark_safe(self.text) if self.allow_tags else conditional_escape(self.text)
+        )
         if force_text(text) == '':
             text = mark_safe('&nbsp;')
         for wrap in self.wraps:
@@ -78,12 +78,15 @@ class ResultItem(object):
     @property
     def tagattrs(self):
         return mark_safe(
-            '%s%s' % ((self.tag_attrs and ' '.join(self.tag_attrs) or ''),
-                      (self.classes and (' class="%s"' % ' '.join(self.classes)) or '')))
+            '%s%s'
+            % (
+                (self.tag_attrs and ' '.join(self.tag_attrs) or ''),
+                (self.classes and (' class="%s"' % ' '.join(self.classes)) or ''),
+            )
+        )
 
 
 class ResultHeader(ResultItem):
-
     def __init__(self, field_name, row):
         super(ResultHeader, self).__init__(field_name, row)
         self.tag = 'th'
@@ -102,6 +105,7 @@ class ListAdminView(ModelAdminView):
     """
     Display models objects view. this class has ordering and simple filter features.
     """
+
     list_display = ('__str__',)
     list_display_links = ()
     list_display_links_details = False
@@ -122,7 +126,10 @@ class ListAdminView(ModelAdminView):
             raise PermissionDenied
 
         request = self.request
-        request.session['LIST_QUERY'] = (self.model_info, self.request.META['QUERY_STRING'])
+        request.session['LIST_QUERY'] = (
+            self.model_info,
+            self.request.META['QUERY_STRING'],
+        )
 
         self.pk_attname = self.opts.pk.attname
         self.lookup_opts = self.opts
@@ -150,8 +157,11 @@ class ListAdminView(ModelAdminView):
         """
         Return a sequence containing the fields to be displayed on the list.
         """
-        self.base_list_display = (COL_LIST_VAR in self.request.GET and self.request.GET[COL_LIST_VAR] != "" and
-                                  self.request.GET[COL_LIST_VAR].split('.')) or self.list_display
+        self.base_list_display = (
+            COL_LIST_VAR in self.request.GET
+            and self.request.GET[COL_LIST_VAR] != ""
+            and self.request.GET[COL_LIST_VAR].split('.')
+        ) or self.list_display
         return list(self.base_list_display)
 
     @filter_hook
@@ -184,16 +194,17 @@ class ListAdminView(ModelAdminView):
             self.result_list = self.list_queryset._clone()
         else:
             try:
-                self.result_list = self.paginator.page(
-                    self.page_num + 1).object_list
+                self.result_list = self.paginator.page(self.page_num + 1).object_list
             except InvalidPage:
                 if ERROR_FLAG in self.request.GET.keys():
-                    return SimpleTemplateResponse('xadmin/views/invalid_setup.html', {
-                        'title': _('Database error'),
-                    })
+                    return SimpleTemplateResponse(
+                        'xadmin/views/invalid_setup.html',
+                        {'title': _('Database error'),},
+                    )
                 return HttpResponseRedirect(self.request.path + '?' + ERROR_FLAG + '=1')
         self.has_more = self.result_count > (
-            self.list_per_page * self.page_num + len(self.result_list))
+            self.list_per_page * self.page_num + len(self.result_list)
+        )
 
     @filter_hook
     def get_result_list(self):
@@ -280,15 +291,15 @@ class ListAdminView(ModelAdminView):
         order is guaranteed by ensuring the primary key is used as the last
         ordering field.
         """
-        ordering = list(super(ListAdminView, self).get_ordering()
-                        or self._get_default_ordering())
+        ordering = list(
+            super(ListAdminView, self).get_ordering() or self._get_default_ordering()
+        )
         if ORDER_VAR in self.params and self.params[ORDER_VAR]:
             # Clear ordering and used params
             ordering = [
                 pfx + self.get_ordering_field(field_name)
                 for n, pfx, field_name in map(
-                    lambda p: p.rpartition('-'),
-                    self.params[ORDER_VAR].split('.')
+                    lambda p: p.rpartition('-'), self.params[ORDER_VAR].split('.')
                 )
                 if self.get_ordering_field(field_name)
             ]
@@ -358,8 +369,13 @@ class ListAdminView(ModelAdminView):
                     methods.append((name, getattr(self, name)))
             except:
                 pass
-        return [FakeMethodField(name, getattr(method, 'short_description', capfirst(name.replace('_', ' '))))
-                for name, method in methods]
+        return [
+            FakeMethodField(
+                name,
+                getattr(method, 'short_description', capfirst(name.replace('_', ' '))),
+            )
+            for name, method in methods
+        ]
 
     @filter_hook
     def get_context(self):
@@ -367,8 +383,11 @@ class ListAdminView(ModelAdminView):
         Prepare the context for templates.
         """
         self.title = _('%s List') % force_text(self.opts.verbose_name)
-        model_fields = [(f, f.name in self.list_display, self.get_check_field_url(f))
-                        for f in (list(self.opts.fields) + self.get_model_method_fields()) if f.name not in self.list_exclude]
+        model_fields = [
+            (f, f.name in self.list_display, self.get_check_field_url(f))
+            for f in (list(self.opts.fields) + self.get_model_method_fields())
+            if f.name not in self.list_exclude
+        ]
 
         new_context = {
             'model_name': force_text(self.opts.verbose_name_plural),
@@ -382,7 +401,7 @@ class ListAdminView(ModelAdminView):
             'brand_icon': self.get_model_icon(self.model),
             'add_url': self.model_admin_url('add'),
             'result_headers': self.result_headers(),
-            'results': self.results()
+            'results': self.results(),
         }
         context = super(ListAdminView, self).get_context()
         context.update(new_context)
@@ -406,8 +425,12 @@ class ListAdminView(ModelAdminView):
         context.update(kwargs or {})
 
         response = self.get_response(context, *args, **kwargs)
-        return response or TemplateResponse(request, self.object_list_template or
-                                            self.get_template_list('views/model_list.html'), context)
+        return response or TemplateResponse(
+            request,
+            self.object_list_template
+            or self.get_template_list('views/model_list.html'),
+            context,
+        )
 
     @filter_hook
     def post_response(self, *args, **kwargs):
@@ -416,7 +439,11 @@ class ListAdminView(ModelAdminView):
     @csrf_protect_m
     @filter_hook
     def post(self, request, *args, **kwargs):
-        return self.post_result_list() or self.post_response(*args, **kwargs) or self.get(request, *args, **kwargs)
+        return (
+            self.post_result_list()
+            or self.post_response(*args, **kwargs)
+            or self.get(request, *args, **kwargs)
+        )
 
     @filter_hook
     def get_paginator(self):
@@ -429,17 +456,23 @@ class ListAdminView(ModelAdminView):
         elif i == self.page_num:
             return mark_safe(u'<span class="this-page">%d</span> ' % (i + 1))
         else:
-            return mark_safe(u'<a href="%s"%s>%d</a> ' % (escape(self.get_query_string({PAGE_VAR: i})), (i == self.paginator.num_pages - 1 and ' class="end"' or ''), i + 1))
+            return mark_safe(
+                u'<a href="%s"%s>%d</a> '
+                % (
+                    escape(self.get_query_string({PAGE_VAR: i})),
+                    (i == self.paginator.num_pages - 1 and ' class="end"' or ''),
+                    i + 1,
+                )
+            )
 
     # Result List methods
     @filter_hook
     def result_header(self, field_name, row):
         ordering_field_columns = self.ordering_field_columns
         item = ResultHeader(field_name, row)
-        text, attr = label_for_field(field_name, self.model,
-                                     model_admin=self,
-                                     return_attr=True
-                                     )
+        text, attr = label_for_field(
+            field_name, self.model, model_admin=self, return_attr=True
+        )
         item.text = text
         item.attr = attr
         if attr and not getattr(attr, "admin_order_field", None):
@@ -491,7 +524,7 @@ class ListAdminView(ModelAdminView):
 
         item.sorted = sorted
         item.sortable = True
-        item.ascending = (order_type == "asc")
+        item.ascending = order_type == "asc"
         item.sort_priority = sort_priority
 
         menus = [
@@ -501,14 +534,26 @@ class ListAdminView(ModelAdminView):
         if sorted:
             row['num_sorted_fields'] = row['num_sorted_fields'] + 1
             menus.append((None, o_list_remove, 'times', _(u'Cancel Sort')))
-            item.btns.append('<a class="toggle" href="%s"><i class="fa fa-%s"></i></a>' % (
-                self.get_query_string({ORDER_VAR: '.'.join(o_list_toggle)}), 'sort-up' if order_type == "asc" else 'sort-down'))
+            item.btns.append(
+                '<a class="toggle" href="%s"><i class="fa fa-%s"></i></a>'
+                % (
+                    self.get_query_string({ORDER_VAR: '.'.join(o_list_toggle)}),
+                    'sort-up' if order_type == "asc" else 'sort-down',
+                )
+            )
 
-        item.menus.extend(['<li%s><a href="%s" class="active"><i class="fa fa-%s"></i> %s</a></li>' %
-                           (
-                               (' class="active"' if sorted and order_type == i[
-                                   0] else ''),
-                               self.get_query_string({ORDER_VAR: '.'.join(i[1])}), i[2], i[3]) for i in menus])
+        item.menus.extend(
+            [
+                '<li%s><a href="%s" class="active"><i class="fa fa-%s"></i> %s</a></li>'
+                % (
+                    (' class="active"' if sorted and order_type == i[0] else ''),
+                    self.get_query_string({ORDER_VAR: '.'.join(i[1])}),
+                    i[2],
+                    i[3],
+                )
+                for i in menus
+            ]
+        )
         item.classes.extend(th_classes)
 
         return item
@@ -520,8 +565,9 @@ class ListAdminView(ModelAdminView):
         """
         row = ResultRow()
         row['num_sorted_fields'] = 0
-        row.cells = [self.result_header(
-            field_name, row) for field_name in self.list_display]
+        row.cells = [
+            self.result_header(field_name, row) for field_name in self.list_display
+        ]
         return row
 
     @filter_hook
@@ -533,7 +579,9 @@ class ListAdminView(ModelAdminView):
         try:
             f, attr, value = lookup_field(field_name, obj, self)
         except (AttributeError, ObjectDoesNotExist, NoReverseMatch):
-            item.text = mark_safe("<span class='text-muted'>%s</span>" % EMPTY_CHANGELIST_VALUE)
+            item.text = mark_safe(
+                "<span class='text-muted'>%s</span>" % EMPTY_CHANGELIST_VALUE
+            )
         else:
             if f is None:
                 item.allow_tags = getattr(attr, 'allow_tags', False)
@@ -547,14 +595,19 @@ class ListAdminView(ModelAdminView):
                 if isinstance(f.remote_field, models.ManyToOneRel):
                     field_val = getattr(obj, f.name)
                     if field_val is None:
-                        item.text = mark_safe("<span class='text-muted'>%s</span>" % EMPTY_CHANGELIST_VALUE)
+                        item.text = mark_safe(
+                            "<span class='text-muted'>%s</span>"
+                            % EMPTY_CHANGELIST_VALUE
+                        )
                     else:
                         item.text = field_val
                 else:
                     item.text = display_for_field(value, f)
-                if isinstance(f, models.DateField)\
-                    or isinstance(f, models.TimeField)\
-                        or isinstance(f, models.ForeignKey):
+                if (
+                    isinstance(f, models.DateField)
+                    or isinstance(f, models.TimeField)
+                    or isinstance(f, models.ForeignKey)
+                ):
                     item.classes.append('nowrap')
 
             item.field = f
@@ -562,19 +615,26 @@ class ListAdminView(ModelAdminView):
             item.value = value
 
         # If list_display_links not defined, add the link tag to the first field
-        if (item.row['is_display_first'] and not self.list_display_links) \
-                or field_name in self.list_display_links:
+        if (
+            item.row['is_display_first'] and not self.list_display_links
+        ) or field_name in self.list_display_links:
             item.row['is_display_first'] = False
             item.is_display_link = True
             if self.list_display_links_details:
-                item_res_uri = self.model_admin_url("detail", getattr(obj, self.pk_attname))
+                item_res_uri = self.model_admin_url(
+                    "detail", getattr(obj, self.pk_attname)
+                )
                 if item_res_uri:
                     if self.has_change_permission(obj):
-                        edit_url = self.model_admin_url("change", getattr(obj, self.pk_attname))
+                        edit_url = self.model_admin_url(
+                            "change", getattr(obj, self.pk_attname)
+                        )
                     else:
                         edit_url = ""
-                    item.wraps.append('<a data-res-uri="%s" data-edit-uri="%s" class="details-handler" rel="tooltip" title="%s">%%s</a>'
-                                      % (item_res_uri, edit_url, _(u'Details of %s') % str(obj)))
+                    item.wraps.append(
+                        '<a data-res-uri="%s" data-edit-uri="%s" class="details-handler" rel="tooltip" title="%s">%%s</a>'
+                        % (item_res_uri, edit_url, _(u'Details of %s') % str(obj))
+                    )
             else:
                 url = self.url_for_result(obj)
                 item.wraps.append(u'<a href="%s">%%s</a>' % url)
@@ -586,8 +646,9 @@ class ListAdminView(ModelAdminView):
         row = ResultRow()
         row['is_display_first'] = True
         row['object'] = obj
-        row.cells = [self.result_item(
-            obj, field_name, row) for field_name in self.list_display]
+        row.cells = [
+            self.result_item(obj, field_name, row) for field_name in self.list_display
+        ]
         return row
 
     @filter_hook
@@ -604,7 +665,9 @@ class ListAdminView(ModelAdminView):
     # Media
     @filter_hook
     def get_media(self):
-        media = super(ListAdminView, self).get_media() + self.vendor('xadmin.page.list.js', 'xadmin.page.form.js')
+        media = super(ListAdminView, self).get_media() + self.vendor(
+            'xadmin.page.list.js', 'xadmin.page.form.js'
+        )
         if self.list_display_links_details:
             media += self.vendor('xadmin.plugin.details.js', 'xadmin.form.css')
         return media
@@ -618,7 +681,8 @@ class ListAdminView(ModelAdminView):
         paginator, page_num = self.paginator, self.page_num
 
         pagination_required = (
-            not self.show_all or not self.can_show_all) and self.multi_page
+            not self.show_all or not self.can_show_all
+        ) and self.multi_page
         if not pagination_required:
             page_range = []
         else:
@@ -637,16 +701,15 @@ class ListAdminView(ModelAdminView):
                 if page_num > (ON_EACH_SIDE + ON_ENDS):
                     page_range.extend(range(0, ON_EACH_SIDE - 1))
                     page_range.append(DOT)
-                    page_range.extend(
-                        range(page_num - ON_EACH_SIDE, page_num + 1))
+                    page_range.extend(range(page_num - ON_EACH_SIDE, page_num + 1))
                 else:
                     page_range.extend(range(0, page_num + 1))
                 if page_num < (paginator.num_pages - ON_EACH_SIDE - ON_ENDS - 1):
-                    page_range.extend(
-                        range(page_num + 1, page_num + ON_EACH_SIDE + 1))
+                    page_range.extend(range(page_num + 1, page_num + ON_EACH_SIDE + 1))
                     page_range.append(DOT)
-                    page_range.extend(range(
-                        paginator.num_pages - ON_ENDS, paginator.num_pages))
+                    page_range.extend(
+                        range(paginator.num_pages - ON_ENDS, paginator.num_pages)
+                    )
                 else:
                     page_range.extend(range(page_num + 1, paginator.num_pages))
 

@@ -19,23 +19,30 @@ class QuickFilterMultiSelectFieldListFilter(MultiSelectFieldListFilter):
     Uses the default spec for each 
 
     """
+
     template = 'xadmin/filters/quickfilter.html'
 
 
 class QuickFilterPlugin(BaseAdminPlugin):
     """ Add a filter menu to the left column of the page """
+
     list_quick_filter = ()  # these must be a subset of list_filter to work
     quickfilter = {}
     search_fields = ()
     free_query_filter = True
 
     def init_request(self, *args, **kwargs):
-        menu_style_accordian = hasattr(self.admin_view, 'menu_style') and self.admin_view.menu_style == 'accordion'
+        menu_style_accordian = (
+            hasattr(self.admin_view, 'menu_style')
+            and self.admin_view.menu_style == 'accordion'
+        )
         return bool(self.list_quick_filter) and not menu_style_accordian
 
     # Media
     def get_media(self, media):
-        return media + self.vendor('xadmin.plugin.quickfilter.js', 'xadmin.plugin.quickfilter.css')
+        return media + self.vendor(
+            'xadmin.plugin.quickfilter.js', 'xadmin.plugin.quickfilter.css'
+        )
 
     def lookup_allowed(self, lookup, value):
         model = self.model
@@ -83,7 +90,13 @@ class QuickFilterPlugin(BaseAdminPlugin):
         return clean_lookup in self.list_quick_filter
 
     def get_list_queryset(self, queryset):
-        lookup_params = dict([(smart_str(k)[len(FILTER_PREFIX):], v) for k, v in self.admin_view.params.items() if smart_str(k).startswith(FILTER_PREFIX) and v != ''])
+        lookup_params = dict(
+            [
+                (smart_str(k)[len(FILTER_PREFIX) :], v)
+                for k, v in self.admin_view.params.items()
+                if smart_str(k).startswith(FILTER_PREFIX) and v != ''
+            ]
+        )
         for p_key, p_val in iteritems(lookup_params):
             if p_val == "False":
                 lookup_params[p_key] = False
@@ -94,7 +107,11 @@ class QuickFilterPlugin(BaseAdminPlugin):
 
         # for clean filters
         self.admin_view.quickfilter['has_query_param'] = bool(lookup_params)
-        self.admin_view.quickfilter['clean_query_url'] = self.admin_view.get_query_string(remove=[k for k in self.request.GET.keys() if k.startswith(FILTER_PREFIX)])
+        self.admin_view.quickfilter[
+            'clean_query_url'
+        ] = self.admin_view.get_query_string(
+            remove=[k for k in self.request.GET.keys() if k.startswith(FILTER_PREFIX)]
+        )
 
         # Normalize the types of keys
         if not self.free_query_filter:
@@ -118,7 +135,9 @@ class QuickFilterPlugin(BaseAdminPlugin):
                         field_order_by = list_quick_filter['order_by']
                     if 'limit' in list_quick_filter:
                         field_limit = list_quick_filter['limit']
-                    if 'sort' in list_quick_filter and callable(list_quick_filter['sort']):
+                    if 'sort' in list_quick_filter and callable(
+                        list_quick_filter['sort']
+                    ):
                         sort_key = list_quick_filter['sort']
                     if 'cache' in list_quick_filter and type(list_quick_filter) == dict:
                         cache_config = list_quick_filter['cache']
@@ -130,8 +149,18 @@ class QuickFilterPlugin(BaseAdminPlugin):
                     field_path = field
                     field_parts = get_fields_from_path(self.model, field_path)
                     field = field_parts[-1]
-                spec = QuickFilterMultiSelectFieldListFilter(field, self.request, lookup_params, self.model, self.admin_view, field_path=field_path,
-                                                             field_order_by=field_order_by, field_limit=field_limit, sort_key=sort_key, cache_config=cache_config)
+                spec = QuickFilterMultiSelectFieldListFilter(
+                    field,
+                    self.request,
+                    lookup_params,
+                    self.model,
+                    self.admin_view,
+                    field_path=field_path,
+                    field_order_by=field_order_by,
+                    field_limit=field_limit,
+                    sort_key=sort_key,
+                    cache_config=cache_config,
+                )
 
                 if len(field_parts) > 1:
                     spec.title = "%s %s" % (field_parts[-2].name, spec.title)
@@ -143,7 +172,9 @@ class QuickFilterPlugin(BaseAdminPlugin):
                         new_qs = spec.do_filte(queryset)
                     except ValidationError as e:
                         new_qs = None
-                        self.admin_view.message_user(_("<b>Filtering error:</b> %s") % e.messages[0], 'error')
+                        self.admin_view.message_user(
+                            _("<b>Filtering error:</b> %s") % e.messages[0], 'error'
+                        )
                     if new_qs is not None:
                         queryset = new_qs
 
@@ -162,7 +193,12 @@ class QuickFilterPlugin(BaseAdminPlugin):
             return queryset
 
     def block_left_navbar(self, context, nodes):
-        nodes.append(loader.render_to_string('xadmin/blocks/modal_list.left_navbar.quickfilter.html',
-                                             get_context_dict(context)))
+        nodes.append(
+            loader.render_to_string(
+                'xadmin/blocks/modal_list.left_navbar.quickfilter.html',
+                get_context_dict(context),
+            )
+        )
+
 
 site.register_plugin(QuickFilterPlugin, ListAdminView)

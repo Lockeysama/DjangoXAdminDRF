@@ -11,9 +11,7 @@ from django.template.loader import render_to_string
 from django.urls.base import reverse
 from django.db import transaction
 
-from xadmin.views import (
-    BaseAdminPlugin, ModelAdminView, ListAdminView
-)
+from xadmin.views import BaseAdminPlugin, ModelAdminView, ListAdminView
 from xadmin.sites import site
 from xadmin.views.base import csrf_protect_m
 
@@ -31,9 +29,7 @@ class SortableListPlugin(BaseAdminPlugin):
 
     def result_row(self, __, obj):
         row = __()
-        row.update({
-            "tagattrs": "order-key=order_{}".format(obj.pk)
-        })
+        row.update({"tagattrs": "order-key=order_{}".format(obj.pk)})
         return row
 
     def result_item(self, item, obj, field_name, row):
@@ -42,12 +38,15 @@ class SortableListPlugin(BaseAdminPlugin):
         return item
 
     def get_context(self, context):
-        context['save_order_url'] = self.get_model_url(self.admin_view.model, 'save_order')
+        context['save_order_url'] = self.get_model_url(
+            self.admin_view.model, 'save_order'
+        )
         return context
 
     def block_top_toolbar(self, context, nodes):
         save_node = render_to_string(
-            'xadmin/blocks/model_list.top_toolbar.saveorder.html', context_instance=context
+            'xadmin/blocks/model_list.top_toolbar.saveorder.html',
+            context_instance=context,
         )
         nodes.append(save_node)
 
@@ -58,7 +57,6 @@ class SortableListPlugin(BaseAdminPlugin):
 
 
 class SaveOrderView(ModelAdminView):
-
     @csrf_protect_m
     @transaction.atomic
     def post(self, request):

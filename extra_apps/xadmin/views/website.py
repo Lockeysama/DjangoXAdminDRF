@@ -22,13 +22,11 @@ class IndexView(Dashboard):
 
 
 class UserSettingView(BaseAdminView):
-
     @never_cache
     def post(self, request):
         key = request.POST['key']
         val = request.POST['value']
-        us, created = UserSettings.objects.get_or_create(
-            user=self.user, key=key)
+        us, created = UserSettings.objects.get_or_create(user=self.user, key=key)
         us.value = val
         us.save()
         return HttpResponse('')
@@ -50,12 +48,14 @@ class LoginView(BaseAdminView):
         helper = FormHelper()
         helper.form_tag = False
         helper.include_media = False
-        context.update({
-            'title': self.title,
-            'helper': helper,
-            'app_path': request.get_full_path(),
-            REDIRECT_FIELD_NAME: request.get_full_path(),
-        })
+        context.update(
+            {
+                'title': self.title,
+                'helper': helper,
+                'app_path': request.get_full_path(),
+                REDIRECT_FIELD_NAME: request.get_full_path(),
+            }
+        )
         defaults = {
             'extra_context': context,
             # 'current_app': self.admin_site.name,

@@ -3,7 +3,12 @@ from django import forms
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from xadmin.sites import site
-from xadmin.views import BaseAdminPlugin, ModelFormAdminView, DetailAdminView, ListAdminView
+from xadmin.views import (
+    BaseAdminPlugin,
+    ModelFormAdminView,
+    DetailAdminView,
+    ListAdminView,
+)
 
 
 def get_gallery_modal():
@@ -26,11 +31,15 @@ def get_gallery_modal():
             </div><!-- /.modal-content -->
           </div><!-- /.modal-dialog -->
         </div>
-    """ % (_('Previous'), _('Next'), _('Slideshow'), _('Download'))
+    """ % (
+        _('Previous'),
+        _('Next'),
+        _('Slideshow'),
+        _('Download'),
+    )
 
 
 class AdminImageField(forms.ImageField):
-
     def widget_attrs(self, widget):
         return {'label': self.label}
 
@@ -39,6 +48,7 @@ class AdminImageWidget(forms.FileInput):
     """
     A ImageField Widget that shows its current value if it has one.
     """
+
     def __init__(self, attrs={}):
         super(AdminImageWidget, self).__init__(attrs)
 
@@ -46,14 +56,17 @@ class AdminImageWidget(forms.FileInput):
         output = []
         if value and hasattr(value, "url"):
             label = self.attrs.get('label', name)
-            output.append('<a href="%s" target="_blank" title="%s" data-gallery="gallery"><img src="%s" class="field_img"/></a><br/>%s ' %
-                         (value.url, label, value.url, _('Change:')))
-        output.append(super(AdminImageWidget, self).render(name, value, attrs, renderer))
+            output.append(
+                '<a href="%s" target="_blank" title="%s" data-gallery="gallery"><img src="%s" class="field_img"/></a><br/>%s '
+                % (value.url, label, value.url, _('Change:'))
+            )
+        output.append(
+            super(AdminImageWidget, self).render(name, value, attrs, renderer)
+        )
         return mark_safe(u''.join(output))
 
 
 class ModelDetailPlugin(BaseAdminPlugin):
-
     def __init__(self, admin_view):
         super(ModelDetailPlugin, self).__init__(admin_view)
         self.include_image = False
@@ -69,15 +82,17 @@ class ModelDetailPlugin(BaseAdminPlugin):
         if isinstance(result.field, models.ImageField):
             if result.value:
                 img = getattr(result.obj, field_name)
-                result.text = mark_safe('<a href="%s" target="_blank" title="%s" data-gallery="gallery"><img src="%s" class="field_img"/></a>' % (img.url, result.label, img.url))
+                result.text = mark_safe(
+                    '<a href="%s" target="_blank" title="%s" data-gallery="gallery"><img src="%s" class="field_img"/></a>'
+                    % (img.url, result.label, img.url)
+                )
                 self.include_image = True
         return result
 
     # Media
     def get_media(self, media):
         if self.include_image:
-            media = media + self.vendor('image-gallery.js',
-                                        'image-gallery.css')
+            media = media + self.vendor('image-gallery.js', 'image-gallery.css')
         return media
 
     def block_before_fieldsets(self, context, node):
