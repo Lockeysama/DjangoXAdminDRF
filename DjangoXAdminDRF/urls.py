@@ -20,7 +20,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.routers import DefaultRouter
 
-import xadmin
 from rest_framework_jwt.views import obtain_jwt_token
 from rest_framework.documentation import include_docs_urls
 
@@ -46,5 +45,4 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^api-token-auth/', obtain_jwt_token),
     url(r'^admin/', admin.site.urls),
-    url(r'^xadmin/', xadmin.site.urls),
 ]
