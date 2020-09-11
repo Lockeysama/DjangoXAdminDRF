@@ -130,3 +130,5 @@ dmypy.json
 
 static
 !extra_apps/xadmin/static
+
+.idea
