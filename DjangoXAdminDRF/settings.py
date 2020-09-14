@@ -28,6 +28,10 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'extra_apps'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '-yp=mz-cttem-ap*d2x=pi2!8n$r4yqkfv+v2qf_c*-)!-*fdm'
 
+if SECRET_KEY == '-yp=mz-cttem-ap*d2x=pi2!8n$r4yqkfv+v2qf_c*-)!-*fdm':
+    # SECRET_KEY 必须妥善保存，如果写在在代码中，一旦暴露在网上，有很大风险；可以使用环境变量等方式
+    raise Exception('SECURITY WARNING: keep the secret key used in production secret! ')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DXDRF_DEBUG', False) == 'true'
 DEBUG = True
